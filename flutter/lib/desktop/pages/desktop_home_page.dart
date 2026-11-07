@@ -16,6 +16,8 @@ import 'package:flutter_hbb/desktop/widgets/update_progress.dart';
 import 'package:flutter_hbb/models/platform_model.dart';
 import 'package:flutter_hbb/models/server_model.dart';
 import 'package:flutter_hbb/models/state_model.dart';
+import 'package:flutter_hbb/nisoporte/client_home.dart';
+import 'package:flutter_hbb/nisoporte/tech_home.dart';
 import 'package:flutter_hbb/utils/multi_window_manager.dart';
 import 'package:flutter_hbb/utils/platform_channel.dart';
 import 'package:get/get.dart';
@@ -59,6 +61,12 @@ class _DesktopHomePageState extends State<DesktopHomePage>
   Widget build(BuildContext context) {
     super.build(context);
     final isIncomingOnly = bind.isIncomingOnly();
+    if (isIncomingOnly && !bind.isOutgoingOnly()) {
+      return _buildBlock(child: ClientHome(serviceStopped: svcStopped.value));
+    }
+    if (!isIncomingOnly && !bind.isOutgoingOnly()) {
+      return _buildBlock(child: const NiTechHome());
+    }
     return _buildBlock(
         child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,

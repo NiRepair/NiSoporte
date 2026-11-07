@@ -17,6 +17,8 @@ import 'package:flutter_hbb/desktop/screen/desktop_remote_screen.dart';
 import 'package:flutter_hbb/desktop/screen/desktop_terminal_screen.dart';
 import 'package:flutter_hbb/desktop/widgets/refresh_wrapper.dart';
 import 'package:flutter_hbb/models/state_model.dart';
+import 'package:flutter_hbb/nisoporte/incoming_dialog.dart';
+import 'package:flutter_hbb/nisoporte/theme.dart';
 import 'package:flutter_hbb/utils/multi_window_manager.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
@@ -124,6 +126,12 @@ Future<void> initEnv(String appType) async {
   // for convenience, use global FFI on mobile platform
   // focus on multi-ffi on desktop first
   await initGlobalFFI();
+  if (isDesktop) {
+    await bind.mainSetLocalOption(key: kCommConfKeyTheme, value: 'dark');
+    if (appType == kAppTypeMain && bind.isIncomingOnly()) {
+      await configureNiClientConsent();
+    }
+  }
   // await Firebase.initializeApp();
   _registerEventHandler();
   // Update the system theme.
@@ -155,6 +163,11 @@ void runMainApp(bool startService) async {
   windowManager.waitUntilReadyToShow(windowOptions, () async {
     // Restore the location of the main window before window hide or show.
     await restoreWindowPosition(WindowType.Main);
+    if (bind.isIncomingOnly()) {
+      await windowManager.setSize(const Size(440, 680));
+    } else if (!bind.isOutgoingOnly()) {
+      await windowManager.setSize(const Size(1080, 720));
+    }
     // Check the startup argument, if we successfully handle the argument, we keep the main window hidden.
     final handledByUniLinks = await initUniLinks();
     debugPrint("handled by uni links: $handledByUniLinks");
@@ -286,10 +299,13 @@ void runConnectionManagerScreen() async {
   await initEnv(kAppTypeConnectionManager);
   _runApp(
     '',
-    const DesktopServerPage(),
+    bind.isIncomingOnly()
+        ? const NiIncomingPage(child: DesktopServerPage())
+        : const DesktopServerPage(),
     MyTheme.currentThemeMode(),
   );
-  final hide = await bind.cmGetConfig(name: "hide_cm") == 'true';
+  final hide = !bind.isIncomingOnly() &&
+      await bind.cmGetConfig(name: "hide_cm") == 'true';
   gFFI.serverModel.hideCm = hide;
   if (hide) {
     await hideCmWindow(isStartup: true);
@@ -304,9 +320,13 @@ void runConnectionManagerScreen() async {
 bool _isCmReadyToShow = false;
 
 showCmWindow({bool isStartup = false}) async {
+  final size = bind.isIncomingOnly()
+      ? const Size(440, 490)
+      : kConnectionManagerWindowSizeClosedChat;
+  final alignment = bind.isIncomingOnly() ? Alignment.center : Alignment.topRight;
   if (isStartup) {
     WindowOptions windowOptions = getHiddenTitleBarWindowOptions(
-        size: kConnectionManagerWindowSizeClosedChat, alwaysOnTop: true);
+        size: size, alwaysOnTop: true);
     await windowManager.waitUntilReadyToShow(windowOptions, null);
     bind.mainHideDock();
     await Future.wait([
@@ -316,7 +336,7 @@ showCmWindow({bool isStartup = false}) async {
     ]);
     // ensure initial window size to be changed
     await windowManager.setSizeAlignment(
-        kConnectionManagerWindowSizeClosedChat, Alignment.topRight);
+        size, alignment);
     _isCmReadyToShow = true;
   } else if (_isCmReadyToShow) {
     if (await windowManager.getOpacity() != 1) {
@@ -324,7 +344,7 @@ showCmWindow({bool isStartup = false}) async {
       await windowManager.focus();
       await windowManager.minimize(); //needed
       await windowManager.setSizeAlignment(
-          kConnectionManagerWindowSizeClosedChat, Alignment.topRight);
+          size, alignment);
       windowOnTop(null);
     }
   }
@@ -361,9 +381,9 @@ void _runApp(
       navigatorKey: globalKey,
       debugShowCheckedModeBanner: false,
       title: title,
-      theme: MyTheme.lightTheme,
-      darkTheme: MyTheme.darkTheme,
-      themeMode: themeMode,
+      theme: isDesktop ? NiTheme.darkTheme : MyTheme.lightTheme,
+      darkTheme: isDesktop ? NiTheme.darkTheme : MyTheme.darkTheme,
+      themeMode: isDesktop ? ThemeMode.dark : themeMode,
       home: home,
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
@@ -498,9 +518,9 @@ class _AppState extends State<App> with WidgetsBindingObserver {
           title: isWeb
               ? '${bind.mainGetAppNameSync()} Web Client V2 (Preview)'
               : bind.mainGetAppNameSync(),
-          theme: MyTheme.lightTheme,
-          darkTheme: MyTheme.darkTheme,
-          themeMode: MyTheme.currentThemeMode(),
+          theme: isDesktop ? NiTheme.darkTheme : MyTheme.lightTheme,
+          darkTheme: isDesktop ? NiTheme.darkTheme : MyTheme.darkTheme,
+          themeMode: isDesktop ? ThemeMode.dark : MyTheme.currentThemeMode(),
           home: isDesktop
               ? const DesktopTabPage()
               : isWeb
