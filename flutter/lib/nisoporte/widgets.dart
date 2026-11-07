@@ -14,14 +14,8 @@ class NiBrand extends StatelessWidget {
                 const Icon(Icons.build, size: 40, color: NiTheme.accent)),
         const SizedBox(width: 12),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('NiSoporte',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
-              const Text('de NiRepair', style: TextStyle(color: NiTheme.muted)),
-            ],
-          ),
+          child: const Text('NiSoporte',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
         ),
       ]);
 }
@@ -57,24 +51,22 @@ class NiStatus extends StatelessWidget {
             ? NiTheme.warning
             : NiTheme.error;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: color.withOpacity(0.35)),
       ),
-      child: Row(children: [
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
         Icon(Icons.circle, color: color, size: 10),
         const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            status == 1
-                ? 'Listo para recibir ayuda'
-                : status == 0
-                    ? 'Conectando…'
-                    : 'Sin conexión con NiRepair. Revisa tu internet',
-            style: TextStyle(color: color, fontWeight: FontWeight.w600),
-          ),
+        Text(
+          status == 1
+              ? 'Listo'
+              : status == 0
+                  ? 'Conectando…'
+                  : 'Sin conexión',
+          style: TextStyle(color: color, fontWeight: FontWeight.w600),
         ),
       ]),
     );
@@ -105,32 +97,14 @@ class NiContact extends StatelessWidget {
     }
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('No se ha podido abrir el enlace. Llámanos al 630 22 47 31.')));
+        content: Text('No se ha podido abrir WhatsApp. Inténtalo de nuevo.')));
   }
 
   @override
-  Widget build(BuildContext context) => NiCard(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('¿Necesitas ayuda?',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 6),
-          const Text('630 22 47 31', style: TextStyle(color: NiTheme.text2)),
-          const SizedBox(height: 12),
-          Wrap(spacing: 8, runSpacing: 8, children: [
-            ElevatedButton(
-              onPressed: () => _open(context, 'https://wa.me/34630224731'),
-              child: const Text('WhatsApp'),
-            ),
-            OutlinedButton(
-              onPressed: () => _open(context, 'tel:+34630224731'),
-              child: const Text('Llamar'),
-            ),
-          ]),
-          TextButton(
-            onPressed: () => _open(context, 'https://nirepair.es'),
-            child: const Text('nirepair.es'),
-          ),
-        ]),
+  Widget build(BuildContext context) => TextButton(
+        style: TextButton.styleFrom(foregroundColor: NiTheme.muted),
+        onPressed: () => _open(context, 'https://wa.me/34630224731'),
+        child: const Text('WhatsApp 630 22 47 31'),
       );
 }
 

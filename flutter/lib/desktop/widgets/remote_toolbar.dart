@@ -10,6 +10,7 @@ import 'package:flutter_hbb/common/widgets/toolbar.dart';
 import 'package:flutter_hbb/models/chat_model.dart';
 import 'package:flutter_hbb/models/state_model.dart';
 import 'package:flutter_hbb/consts.dart';
+import 'package:flutter_hbb/nisoporte/remote_toolbar_style.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
@@ -324,67 +325,45 @@ class ToolbarState {
   }
 }
 
+// NiSoporte: values come from NiToolbarStyle; presentation only.
 class _ToolbarTheme {
-  static const Color blueColor = MyTheme.button;
-  static const Color hoverBlueColor = MyTheme.accent;
-  static Color inactiveColor = Colors.grey[800]!;
-  static Color hoverInactiveColor = Colors.grey[850]!;
+  static const Color blueColor = NiToolbarStyle.blueColor;
+  static const Color hoverBlueColor = NiToolbarStyle.hoverBlueColor;
+  static Color inactiveColor = NiToolbarStyle.inactiveColor;
+  static Color hoverInactiveColor = NiToolbarStyle.hoverInactiveColor;
 
-  static const Color redColor = Colors.redAccent;
-  static const Color hoverRedColor = Colors.red;
+  static const Color redColor = NiToolbarStyle.redColor;
+  static const Color hoverRedColor = NiToolbarStyle.hoverRedColor;
   // kMinInteractiveDimension
-  static const double height = 20.0;
-  static const double dividerHeight = 12.0;
+  static const double height = NiToolbarStyle.height;
+  static const double dividerHeight = NiToolbarStyle.dividerHeight;
 
-  static const double buttonSize = 32;
-  static const double buttonHMargin = 2;
-  static const double buttonVMargin = 6;
-  static const double iconRadius = 8;
-  static const double elevation = 3;
+  static const double buttonSize = NiToolbarStyle.buttonSize;
+  static const double buttonHMargin = NiToolbarStyle.buttonHMargin;
+  static const double buttonVMargin = NiToolbarStyle.buttonVMargin;
+  static const double iconRadius = NiToolbarStyle.iconRadius;
+  static const double elevation = NiToolbarStyle.elevation;
 
-  static double dividerSpaceToAction = isWindows ? 8 : 14;
+  static double dividerSpaceToAction = NiToolbarStyle.dividerSpaceToAction;
 
-  static double menuBorderRadius = isWindows ? 5.0 : 7.0;
-  static EdgeInsets menuPadding = isWindows
-      ? EdgeInsets.fromLTRB(4, 12, 4, 12)
-      : EdgeInsets.fromLTRB(6, 14, 6, 14);
-  static const double menuButtonBorderRadius = 3.0;
+  static double menuBorderRadius = NiToolbarStyle.menuBorderRadius;
+  static EdgeInsets menuPadding = NiToolbarStyle.menuPadding;
+  static const double menuButtonBorderRadius =
+      NiToolbarStyle.menuButtonBorderRadius;
 
   static Color borderColor(BuildContext context) =>
-      MyTheme.color(context).border3 ?? MyTheme.border;
+      NiToolbarStyle.borderColor(context);
 
   static Color? dividerColor(BuildContext context) =>
-      MyTheme.color(context).divider;
+      NiToolbarStyle.dividerColor(context);
 
-  static MenuStyle defaultMenuStyle(BuildContext context) => MenuStyle(
-        side: MaterialStateProperty.all(BorderSide(
-          width: 1,
-          color: borderColor(context),
-        )),
-        shape: MaterialStatePropertyAll(RoundedRectangleBorder(
-            borderRadius:
-                BorderRadius.circular(_ToolbarTheme.menuBorderRadius))),
-        padding: MaterialStateProperty.all(_ToolbarTheme.menuPadding),
-      );
-  static final defaultMenuButtonStyle = ButtonStyle(
-    backgroundColor: MaterialStatePropertyAll(Colors.transparent),
-    padding: MaterialStatePropertyAll(EdgeInsets.zero),
-    overlayColor: MaterialStatePropertyAll(Colors.transparent),
-  );
+  static MenuStyle defaultMenuStyle(BuildContext context) =>
+      NiToolbarStyle.defaultMenuStyle(context);
+  static final defaultMenuButtonStyle = NiToolbarStyle.defaultMenuButtonStyle;
 
   static Widget borderWrapper(
-      BuildContext context, Widget child, BorderRadius borderRadius) {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: borderColor(context),
-          width: 1,
-        ),
-        borderRadius: borderRadius,
-      ),
-      child: child,
-    );
-  }
+          BuildContext context, Widget child, BorderRadius borderRadius) =>
+      NiToolbarStyle.borderWrapper(context, child, borderRadius);
 }
 
 typedef DismissFunc = void Function();

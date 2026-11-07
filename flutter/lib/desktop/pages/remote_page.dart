@@ -7,6 +7,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_hbb/models/state_model.dart';
+import 'package:flutter_hbb/nisoporte/remote_toolbar_style.dart';
 
 import '../../consts.dart';
 import '../../common/widgets/overlay.dart';
@@ -709,7 +710,7 @@ class _RemotePageState extends State<RemotePage>
       );
 
   Widget buildBody(BuildContext context) {
-    remoteToolbar(BuildContext context) => RemoteToolbar(
+    remoteToolbar(BuildContext context) => NiToolbarStyle.wrap(context, RemoteToolbar(
           id: widget.id,
           ffi: _ffi,
           state: widget.toolbarState,
@@ -726,7 +727,7 @@ class _RemotePageState extends State<RemotePage>
             }
           },
           setRemoteState: setState,
-        );
+        ));
 
     bodyWidget() {
       return Stack(

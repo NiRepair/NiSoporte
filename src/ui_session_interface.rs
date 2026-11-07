@@ -16,7 +16,7 @@ use base::message_proto::*;
 use bytes::Bytes;
 use hbb_common::{
     allow_err,
-    config::{self, Config, LocalConfig, PeerConfig},
+    config::{self, Config, PeerConfig},
     get_version_number, log,
     rendezvous_proto::ConnType,
     tokio::{

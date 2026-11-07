@@ -68,22 +68,26 @@ class _ClientHomeState extends State<ClientHome> {
           {bool password = false}) =>
       Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(label, style: const TextStyle(color: NiTheme.text2)),
-        const SizedBox(height: 8),
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: Alignment.centerLeft,
-          child: SelectableText(value.isEmpty ? 'Generando…' : value,
-              style: NiTheme.codeStyle),
-        ),
-        Wrap(spacing: 8, children: [
-          TextButton(
+        const SizedBox(height: 4),
+        Row(children: [
+          Expanded(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: SelectableText(value.isEmpty ? 'Generando…' : value,
+                  style: NiTheme.codeStyle),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Copiar $label',
             onPressed: value.isEmpty ? null : () => niCopy(context, value),
-            child: const Text('Copiar'),
+            icon: const Icon(Icons.copy),
           ),
           if (password)
-            TextButton(
+            IconButton(
+              tooltip: 'Cambiar contraseña',
               onPressed: _changingPassword ? null : _changePassword,
-              child: const Text('Cambiar'),
+              icon: const Icon(Icons.refresh),
             ),
         ]),
       ]);
@@ -94,43 +98,43 @@ class _ClientHomeState extends State<ClientHome> {
         builder: (context, _) {
           final model = gFFI.serverModel;
           return Scaffold(
-            body: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const NiBrand(),
-                  const SizedBox(height: 24),
-                  NiStatus(status: widget.serviceStopped ? -1 : model.connectStatus),
-                  const SizedBox(height: 16),
-                  NiCard(
+            body: CustomScrollView(
+              slivers: [
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _credential(context, 'Tu código',
+                        const NiBrand(),
+                        const SizedBox(height: 12),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: NiStatus(
+                              status: widget.serviceStopped
+                                  ? -1
+                                  : model.connectStatus),
+                        ),
+                        const SizedBox(height: 20),
+                        _credential(context, 'ID',
                             model.connectStatus == 1 ? model.serverId.text : ''),
-                        const Divider(height: 24),
+                        const SizedBox(height: 16),
                         _credential(context, 'Contraseña', _password,
                             password: true),
-                        const SizedBox(height: 8),
-                        const Text('Díctale estos dos números a nuestro técnico',
+                        const SizedBox(height: 12),
+                        const Text('Díctale estos números a nuestro técnico',
                             style: TextStyle(color: NiTheme.text2)),
-                        const SizedBox(height: 8),
-                        const Text('La ayuda solo empieza cuando pulses Aceptar.',
-                            style: TextStyle(color: NiTheme.muted)),
                         if (_error != null)
                           Text(_error!, style: const TextStyle(color: NiTheme.error)),
+                        const Spacer(),
+                        const SizedBox(height: 12),
+                        const NiContact(),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  const NiContact(),
-                  const SizedBox(height: 20),
-                  const Text('NiSoporte 1.0 · NiRepair',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: NiTheme.muted, fontSize: 12)),
-                ],
-              ),
+                ),
+              ],
             ),
           );
         },

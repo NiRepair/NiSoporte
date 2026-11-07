@@ -65,7 +65,7 @@ use hbb_common::{
             mpsc::{error::TryRecvError, unbounded_channel, UnboundedReceiver},
             oneshot,
         },
-        time::{interval, Duration, Instant},
+        time::{Duration, Instant},
     },
     webrtc::WebRTCStream,
     websocket::{check_ws, is_ws_endpoint},
@@ -416,8 +416,8 @@ impl Client {
     /// Start a new connection.
     async fn _start(
         peer: &str,
-        key: &str,
-        token: &str,
+        _key: &str,
+        _token: &str,
         conn_type: ConnType,
         interface: impl Interface,
     ) -> ResultType<(
@@ -1858,7 +1858,7 @@ impl Client {
     async fn create_relay(
         peer: &str,
         uuid: String,
-        relay_server: String,
+        _relay_server: String,
         key: &str,
         conn_type: ConnType,
         ipv4: bool,

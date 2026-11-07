@@ -164,7 +164,7 @@ void runMainApp(bool startService) async {
     // Restore the location of the main window before window hide or show.
     await restoreWindowPosition(WindowType.Main);
     if (bind.isIncomingOnly()) {
-      await windowManager.setSize(const Size(440, 680));
+      await windowManager.setSize(const Size(400, 520));
     } else if (!bind.isOutgoingOnly()) {
       await windowManager.setSize(const Size(1080, 720));
     }

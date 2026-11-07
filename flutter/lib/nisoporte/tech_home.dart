@@ -6,10 +6,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hbb/common.dart';
 import 'package:flutter_hbb/common/formatter/id_formatter.dart';
+import 'package:flutter_hbb/common/widgets/dialog.dart'
+    show checkUnlockPinDialog;
 import 'package:flutter_hbb/consts.dart';
+import 'package:flutter_hbb/desktop/pages/desktop_home_page.dart'
+    show setPasswordDialog;
 import 'package:flutter_hbb/models/peer_model.dart';
 import 'package:flutter_hbb/models/platform_model.dart';
+import 'package:flutter_hbb/models/server_model.dart';
+import 'package:flutter_hbb/models/state_model.dart';
 import 'package:flutter_hbb/nisoporte/theme.dart';
+import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+part 'tech_lan.dart';
+part 'tech_history.dart';
+part 'tech_my_device.dart';
+part 'tech_settings.dart';
 
 const _kFont = 'Segoe UI Variable';
 const _kFontFallback = ['Segoe UI'];
@@ -19,7 +32,15 @@ const double _kRadius = 16;
 const double _kRadiusLarge = 20;
 const _kAnim = Duration(milliseconds: 180);
 
-enum _TechSection { connect, recents, favorites, settings }
+enum _TechSection {
+  connect,
+  recents,
+  favorites,
+  lan,
+  history,
+  myDevice,
+  settings
+}
 
 enum _ServerState { connecting, ready, offline }
 
@@ -42,6 +63,7 @@ class _NiTechHomeState extends State<NiTechHome> {
     super.initState();
     gFFI.recentPeersModel.addListener(_onPeersChanged);
     gFFI.favoritePeersModel.addListener(_onPeersChanged);
+    gFFI.lanPeersModel.addListener(_onPeersChanged);
     bind.mainLoadRecentPeers();
     bind.mainLoadFavPeers();
     _reloadFavIds();
@@ -53,6 +75,7 @@ class _NiTechHomeState extends State<NiTechHome> {
     _timer?.cancel();
     gFFI.recentPeersModel.removeListener(_onPeersChanged);
     gFFI.favoritePeersModel.removeListener(_onPeersChanged);
+    gFFI.lanPeersModel.removeListener(_onPeersChanged);
     super.dispose();
   }
 
@@ -166,6 +189,7 @@ class _NiTechHomeState extends State<NiTechHome> {
                   Expanded(
                     child: AnimatedSwitcher(
                       duration: duration,
+                      layoutBuilder: _fillLayout,
                       child: KeyedSubtree(
                         key: ValueKey(_section),
                         child: _buildSection(),
@@ -214,6 +238,27 @@ class _NiTechHomeState extends State<NiTechHome> {
           onConnect: _connectTo,
           onToggleFav: _toggleFav,
           onEditAlias: _editAlias,
+        );
+      case _TechSection.lan:
+        return _LanSection(
+          peers: gFFI.lanPeersModel.peers,
+          favIds: _favIds,
+          onConnect: _connectTo,
+          onToggleFav: _toggleFav,
+        );
+      case _TechSection.history:
+        return _HistorySection(
+          peers: gFFI.recentPeersModel.peers,
+          favIds: _favIds,
+          onConnect: _connectTo,
+          onToggleFav: _toggleFav,
+          onEditAlias: _editAlias,
+        );
+      case _TechSection.myDevice:
+        return _MyDeviceSection(
+          server: _server,
+          onOpenSecurity: () =>
+              setState(() => _section = _TechSection.settings),
         );
       case _TechSection.settings:
         return const _SettingsSection();
@@ -298,6 +343,11 @@ class _Sidebar extends StatelessWidget {
               'Conectar'),
           _navItem(_TechSection.recents, Icons.history_rounded, 'Recientes'),
           _navItem(_TechSection.favorites, Icons.star_rounded, 'Favoritos'),
+          _navItem(_TechSection.lan, Icons.lan_rounded, 'Red local'),
+          _navItem(
+              _TechSection.history, Icons.receipt_long_rounded, 'Historial'),
+          _navItem(
+              _TechSection.myDevice, Icons.verified_user_rounded, 'Mi equipo'),
           _navItem(_TechSection.settings, Icons.tune_rounded, 'Ajustes'),
           const Spacer(),
           const _MyDeviceCard(),
@@ -650,14 +700,14 @@ class _PeerGrid extends StatelessWidget {
   final Set<String> favIds;
   final void Function(String id, {bool forceRelay}) onConnect;
   final ValueChanged<String> onToggleFav;
-  final ValueChanged<Peer> onEditAlias;
+  final ValueChanged<Peer>? onEditAlias;
 
   const _PeerGrid({
     required this.peers,
     required this.favIds,
     required this.onConnect,
     required this.onToggleFav,
-    required this.onEditAlias,
+    this.onEditAlias,
   });
 
   @override
@@ -672,7 +722,8 @@ class _PeerGrid extends StatelessWidget {
                 onConnect: () =>
                     onConnect(p.id, forceRelay: p.forceAlwaysRelay),
                 onToggleFav: () => onToggleFav(p.id),
-                onEditAlias: () => onEditAlias(p),
+                onEditAlias:
+                    onEditAlias == null ? null : () => onEditAlias!(p),
               ))
           .toList(),
     );
@@ -684,14 +735,14 @@ class _PeerCard extends StatefulWidget {
   final bool isFav;
   final VoidCallback onConnect;
   final VoidCallback onToggleFav;
-  final VoidCallback onEditAlias;
+  final VoidCallback? onEditAlias;
 
   const _PeerCard({
     required this.peer,
     required this.isFav,
     required this.onConnect,
     required this.onToggleFav,
-    required this.onEditAlias,
+    this.onEditAlias,
   });
 
   @override
@@ -757,9 +808,11 @@ class _PeerCardState extends State<_PeerCard> {
                                       : NiTheme.muted),
                             ),
                           ),
-                          const SizedBox(width: 4),
-                          const Icon(Icons.edit_rounded,
-                              size: 13, color: NiTheme.muted),
+                          if (widget.onEditAlias != null) ...[
+                            const SizedBox(width: 4),
+                            const Icon(Icons.edit_rounded,
+                                size: 13, color: NiTheme.muted),
+                          ],
                         ],
                       ),
                     ),
@@ -865,170 +918,13 @@ class _AccentButton extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------- settings
+// ---------------------------------------------------------------- shared
 
-class _SettingsSection extends StatefulWidget {
-  const _SettingsSection();
-
-  @override
-  State<_SettingsSection> createState() => _SettingsSectionState();
-}
-
-class _SettingsSectionState extends State<_SettingsSection> {
-  List<MapEntry<String, String>> _langs = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _loadLangs();
-  }
-
-  Future<void> _loadLangs() async {
-    final List<dynamic> list = jsonDecode(await bind.mainGetLangs());
-    final langs = <MapEntry<String, String>>[
-      MapEntry(defaultOptionLang, 'Idioma del sistema'),
-      for (final v in list) MapEntry(v[0] as String, v[1] as String),
-    ];
-    if (mounted) setState(() => _langs = langs);
-  }
-
-  Future<void> _setLang(String key) async {
-    await bind.mainSetLocalOption(key: kCommConfKeyLang, value: key);
-    reloadAllWindows();
-    bind.mainChangeLanguage(lang: key);
-  }
-
-  Future<void> _setQuality(String value) async {
-    await bind.mainSetUserDefaultOption(key: kOptionImageQuality, value: value);
-    if (mounted) setState(() {});
-  }
-
-  Future<void> _pickRecordDir(String current) async {
-    final selected = await FilePicker.platform.getDirectoryPath(
-        initialDirectory: current.isEmpty ? null : current);
-    if (selected == null) return;
-    await bind.mainSetLocalOption(
-        key: kOptionVideoSaveDirectory, value: selected);
-    if (mounted) setState(() {});
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    String currentLang = bind.mainGetLocalOption(key: kCommConfKeyLang);
-    if (!_langs.any((e) => e.key == currentLang)) {
-      currentLang = defaultOptionLang;
-    }
-    final quality = bind.mainGetUserDefaultOption(key: kOptionImageQuality);
-    final recordDir = bind.mainVideoSaveDirectory(root: false);
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(32, 8, 32, 32),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 640),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Ajustes',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 20),
-            _SettingCard(
-              title: 'Idioma',
-              child: _langs.isEmpty
-                  ? const SizedBox(
-                      height: 24,
-                      width: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2))
-                  : DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: currentLang,
-                        dropdownColor: NiTheme.surface2,
-                        borderRadius: BorderRadius.circular(12),
-                        style: const TextStyle(color: NiTheme.text),
-                        items: _langs
-                            .map((e) => DropdownMenuItem<String>(
-                                value: e.key, child: Text(e.value)))
-                            .toList(),
-                        onChanged: isOptionFixed(kCommConfKeyLang)
-                            ? null
-                            : (key) {
-                                if (key != null) _setLang(key);
-                              },
-                      ),
-                    ),
-            ),
-            const _SettingCard(
-              title: 'Tema',
-              child: Text(
-                  'Oscuro NiRepair. Es fijo y no sigue el tema de Windows.',
-                  style: TextStyle(color: NiTheme.text2)),
-            ),
-            _SettingCard(
-              title: 'Calidad por defecto',
-              child: Wrap(
-                spacing: 8,
-                children: [
-                  for (final q in const [
-                    (kRemoteImageQualityBest, 'Máxima'),
-                    (kRemoteImageQualityBalanced, 'Equilibrada'),
-                    (kRemoteImageQualityLow, 'Rápida'),
-                  ])
-                    ChoiceChip(
-                      label: Text(q.$2),
-                      selected: quality == q.$1,
-                      selectedColor: NiTheme.accentStrong,
-                      backgroundColor: NiTheme.surface2,
-                      side: const BorderSide(color: NiTheme.border),
-                      labelStyle: TextStyle(
-                          color:
-                              quality == q.$1 ? Colors.white : NiTheme.text2),
-                      onSelected: isOptionFixed(kOptionImageQuality)
-                          ? null
-                          : (_) => _setQuality(q.$1),
-                    ),
-                ],
-              ),
-            ),
-            _SettingCard(
-              title: 'Carpeta de grabaciones',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(recordDir,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: NiTheme.text2)),
-                      ),
-                      const SizedBox(width: 12),
-                      OutlinedButton(
-                        onPressed: isOptionFixed(kOptionVideoSaveDirectory)
-                            ? null
-                            : () => _pickRecordDir(recordDir),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: NiTheme.accent,
-                          side: const BorderSide(color: NiTheme.border),
-                          shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(_kRadius)),
-                        ),
-                        child: const Text('Cambiar'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                      'Los archivos recibidos se guardan en la carpeta que elijas en la ventana de transferencia.',
-                      style: TextStyle(color: NiTheme.muted, fontSize: 12)),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+// AnimatedSwitcher's default layout centers loosely; sections must fill.
+Widget _fillLayout(Widget? current, List<Widget> previous) => Stack(
+      fit: StackFit.expand,
+      children: [...previous, if (current != null) current],
     );
-  }
-}
 
 class _SettingCard extends StatelessWidget {
   final String title;

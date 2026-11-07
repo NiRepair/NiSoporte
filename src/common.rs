@@ -12,7 +12,6 @@ use base::{config::keys, message_proto::*};
 #[cfg(not(target_os = "ios"))]
 use hbb_common::whoami;
 use hbb_common::{
-    allow_err,
     anyhow::{anyhow, Context},
     async_recursion::async_recursion,
     bail, base64,
@@ -37,7 +36,7 @@ use hbb_common::{
 
 use crate::{
     hbbs_http::{create_http_client_async, get_url_for_tls},
-    ui_interface::{get_api_server as ui_get_api_server, get_option, set_option},
+    ui_interface::{get_option, set_option},
 };
 
 #[derive(Debug, Eq, PartialEq)]
@@ -1425,8 +1424,16 @@ async fn get_http_response_async(
         "delete" => http_client.delete(url),
         _ => return Err(anyhow!("The HTTP request method is not supported!")),
     };
-    for entry in parse_json_header_entries(header)? {
-        http_client = http_client.header(entry.name, entry.value);
+    match serde_json::from_str::<serde_json::Value>(header)? {
+        serde_json::Value::Object(obj) => {
+            for (name, value) in obj.iter() {
+                http_client = http_client.header(
+                    name.as_str(),
+                    value.as_str().unwrap_or_default().to_owned(),
+                );
+            }
+        }
+        _ => return Err(anyhow!("HTTP header information parsing failed!")),
     }
 
     if tls_type.is_some() && danger_accept_invalid_cert.is_some() {
