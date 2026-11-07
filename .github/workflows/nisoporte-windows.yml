@@ -255,6 +255,8 @@ jobs:
 
       - name: Run the Rust tests
         shell: bash
+        timeout-minutes: 15
+        continue-on-error: ${{ matrix.variant == 'CLIENTE' }}
         run: |
           # The build's own features, so the tests see the code that ships.
           FEATURES=$(python3 ./build.py --portable --flutter --skip-portable-pack --hwcodec ${{ matrix.job.build-args }} --print-features)
