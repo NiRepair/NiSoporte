@@ -1,0 +1,6 @@
+/target
+**/*.rs.bk
+Cargo.lock
+
+/tests/
+/src/websocket/proxy_tests.rs
