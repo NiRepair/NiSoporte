@@ -2617,15 +2617,15 @@ class _AboutState extends State<_About> {
                       .marginSymmetric(vertical: 4.0)),
               InkWell(
                   onTap: () {
-                    launchUrlString('https://rustdesk.com/privacy.html');
+                    launchUrlString('https://github.com/NiRepair/NiSoporte/blob/nisoporte/LICENCE');
                   },
                   child: Text(
-                    translate('Privacy Statement'),
+                    translate('End-user license agreement'),
                     style: linkStyle,
                   ).marginSymmetric(vertical: 4.0)),
               InkWell(
                   onTap: () {
-                    launchUrlString('https://rustdesk.com');
+                    launchUrlString('https://github.com/NiRepair/NiSoporte');
                   },
                   child: Text(
                     translate('Website'),

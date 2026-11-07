@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'about.dart';
 import 'theme.dart';
 
 class NiBrand extends StatelessWidget {
@@ -101,10 +102,49 @@ class NiContact extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) => TextButton(
-        style: TextButton.styleFrom(foregroundColor: NiTheme.muted),
-        onPressed: () => _open(context, 'https://wa.me/34630224731'),
-        child: const Text('WhatsApp 630 22 47 31'),
+  Widget build(BuildContext context) => Wrap(
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: NiTheme.muted),
+            onPressed: () => _open(context, 'https://wa.me/34630224731'),
+            child: const Text('WhatsApp 630 22 47 31'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: NiTheme.muted),
+            onPressed: () => showDialog<void>(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('Acerca de'),
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(niLicenseNotice),
+                      const SizedBox(height: 8),
+                      const Text(niRustDeskNotice),
+                      const SizedBox(height: 8),
+                      for (final url in [niSourceUrl, niRustDeskSourceUrl])
+                        TextButton(
+                          onPressed: () => launchUrl(Uri.parse(url)),
+                          child: Text(url),
+                        ),
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Cerrar'),
+                  ),
+                ],
+              ),
+            ),
+            child: const Text('Acerca de', style: TextStyle(fontSize: 12)),
+          ),
+        ],
       );
 }
 

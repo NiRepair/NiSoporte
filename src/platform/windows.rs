@@ -1247,8 +1247,8 @@ pub fn portable_service_logon_helper_paths() -> Option<(PathBuf, PathBuf)> {
         .home_dir()
         .join("AppData")
         .join("Local")
-        .join("rustdesk-sciter");
-    let dst = dir.join("rustdesk.exe");
+        .join("nisoporte-sciter");
+    let dst = dir.join("NiSoporte.exe");
     Some((dir, dst))
 }
 
@@ -2026,8 +2026,8 @@ fn get_public_base_dir() -> PathBuf {
 #[inline]
 pub fn get_custom_client_staging_dir() -> PathBuf {
     get_public_base_dir()
-        .join("RustDesk")
-        .join("RustDeskCustomClientStaging")
+        .join(crate::get_app_name())
+        .join("NiSoporteCustomClientStaging")
 }
 
 /// Removes the custom client staging directory.
@@ -4006,7 +4006,7 @@ pub fn handle_service_control() -> Option<std::process::ExitCode> {
         std::process::ExitCode::SUCCESS
     } else {
         eprintln!(
-            "RustDesk service control failed: {}",
+            "NiSoporte service control failed: {}",
             std::io::Error::from_raw_os_error(error as i32)
         );
         std::process::ExitCode::FAILURE
@@ -4119,9 +4119,9 @@ pub fn try_remove_temp_update_files() {
             let path = entry.path();
             if let Some(file_name) = path.file_name().and_then(|n| n.to_str()) {
                 // Match downloaded installers, verified copies, and abandoned handoff scripts.
-                if (file_name.starts_with("rustdesk-")
+                if ((file_name.starts_with("nisoporte-") || file_name.starts_with("NiSoporte-"))
                     && (file_name.ends_with(".msi") || file_name.ends_with(".exe")))
-                    || (file_name.starts_with("rustdesk_install_") && file_name.ends_with(".bat"))
+                    || (file_name.starts_with("nisoporte_install_") && file_name.ends_with(".bat"))
                 {
                     // Skip files modified within the last hour to avoid deleting files being downloaded
                     if let Ok(metadata) = std::fs::metadata(&path) {
@@ -4186,7 +4186,7 @@ pub fn message_box(text: &str) {
         .encode_utf16()
         .chain(std::iter::once(0))
         .collect::<Vec<u16>>();
-    let caption = "RustDesk Output"
+    let caption = "NiSoporte Output"
         .encode_utf16()
         .chain(std::iter::once(0))
         .collect::<Vec<u16>>();
@@ -4365,7 +4365,7 @@ pub fn try_kill_rustdesk_main_window_process() -> ResultType<()> {
         log::info!("kill process success: {:?}, pid = {:?}", p.cmd(), p.pid());
         return Ok(());
     }
-    bail!("failed to find rustdesk main window process");
+    bail!("failed to find NiSoporte main window process");
 }
 
 fn nt_terminate_process(process_id: DWORD) -> ResultType<()> {
@@ -4629,7 +4629,7 @@ pub fn send_raw_data_to_printer(printer_name: Option<String>, data: Vec<u8>) -> 
             data.len() as c_ulong,
         );
         if res != 0 {
-            bail!("Failed to send data to the printer, see logs in C:\\Windows\\temp\\test_rustdesk.log for more details.");
+            bail!("Failed to send data to the printer, see logs in C:\\Windows\\temp\\test_nisoporte.log for more details.");
         } else {
             log::info!("Successfully sent data to the printer");
         }

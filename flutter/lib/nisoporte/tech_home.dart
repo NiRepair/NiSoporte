@@ -19,6 +19,8 @@ import 'package:flutter_hbb/nisoporte/theme.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'about.dart';
+
 part 'tech_lan.dart';
 part 'tech_history.dart';
 part 'tech_my_device.dart';

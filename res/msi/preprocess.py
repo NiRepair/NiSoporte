@@ -27,15 +27,15 @@ g_arpsystemcomponent = {
     },
     "Contact": {
         "msi": "ARPCONTACT",
-        "v": "https://github.com/rustdesk/rustdesk",
+        "v": "https://github.com/NiRepair/NiSoporte",
     },
     "HelpLink": {
         "msi": "ARPHELPLINK",
-        "v": "https://github.com/rustdesk/rustdesk/issues/",
+        "v": "https://github.com/NiRepair/NiSoporte/issues/",
     },
     "ReadMe": {
         "msi": "ARPREADME",
-        "v": "https://github.com/rustdesk/rustdesk",
+        "v": "https://github.com/NiRepair/NiSoporte",
     },
 }
 
@@ -48,7 +48,7 @@ def make_parser():
         "-d",
         "--dist-dir",
         type=str,
-        default="../../rustdesk",
+        default="../../NiSoporte",
         help="The dist directory to install.",
     )
     parser.add_argument(
@@ -81,7 +81,7 @@ def make_parser():
         help='Connection type, e.g. "incoming", "outgoing". Default is empty, means incoming-outgoing',
     )
     parser.add_argument(
-        "--app-name", type=str, default="RustDesk", help="The app name."
+        "--app-name", type=str, default="NiSoporte", help="The app name."
     )
     parser.add_argument(
         "-v", "--version", type=str, default="", help="The app version."
@@ -93,7 +93,7 @@ def make_parser():
         "-m",
         "--manufacturer",
         type=str,
-        default="Purslane Tech Pte. Ltd.",
+        default="NiRepair",
         help="The app manufacturer.",
     )
     return parser
@@ -500,14 +500,14 @@ def init_global_vars(dist_dir, app_name, args):
 def update_license_file(app_name):
     if app_name == "RustDesk":
         return
-    license_file = Path(sys.argv[0]).parent.joinpath("Package/License.rtf")
-    with open(license_file, "r", encoding="utf-8") as f:
-        license_content = f.read()
-    license_content = license_content.replace("website rustdesk.com and other ", "")
-    license_content = license_content.replace("RustDesk", app_name)
-    license_content = re.sub(r"Purslane(?: Tech Pte\.)? Ltd", app_name, license_content, flags=re.IGNORECASE)
-    with open(license_file, "w", encoding="utf-8") as f:
-        f.write(license_content)
+    repo_root = Path(__file__).resolve().parents[2]
+    license_file = Path(__file__).parent.joinpath("Package/License.rtf")
+    text = (repo_root / "CREDITOS.md").read_text(encoding="utf-8")
+    text += "\n\n" + (repo_root / "LICENCE").read_text(encoding="utf-8")
+    text = text.replace("\\", "\\\\").replace("{", "\\{").replace("}", "\\}")
+    text = "".join(c if ord(c) < 128 else rf"\u{ord(c)}?" for c in text)
+    text = text.replace("\n", "\\par\n")
+    license_file.write_text(r"{\rtf1\ansi\uc1 " + text + "}", encoding="ascii")
 
 
 def replace_component_guids_in_wxs():

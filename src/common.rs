@@ -1146,7 +1146,7 @@ fn process_software_update_check_response(bytes: Bytes) -> ResultType<()> {
 
 #[tokio::main(flavor = "current_thread")]
 pub async fn do_check_software_update() -> hbb_common::ResultType<()> {
-    bail!("Las actualizaciones de RustDesk no están disponibles en NiSoporte")
+    bail!("Las actualizaciones automáticas no están disponibles en NiSoporte")
 }
 
 #[inline]

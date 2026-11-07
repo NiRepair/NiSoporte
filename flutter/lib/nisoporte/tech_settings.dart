@@ -1,7 +1,6 @@
 part of 'tech_home.dart';
 
 const _kNiSoporteVersion = '1.0';
-const _kSourceUrl = 'https://github.com/NiRepair/NiSoporte';
 const _kLicenseUrl = 'https://www.gnu.org/licenses/agpl-3.0.html';
 const _kWebUrl = 'https://nirepair.es';
 
@@ -791,13 +790,17 @@ class _AboutSettings extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                    'NiSoporte es software libre: puedes usarlo, estudiarlo, modificarlo y compartirlo bajo la licencia GNU Affero General Public License, versión 3 (AGPL-3.0). El código fuente completo de esta versión está publicado.',
+                    niLicenseNotice,
                     style: TextStyle(color: NiTheme.text2, height: 1.4)),
                 const SizedBox(height: 8),
                 Text(
-                    'Basado en RustDesk · Copyright © 2020-${DateTime.now().year} Purslane Tech Pte. Ltd. y colaboradores.',
+                    niRustDeskNotice,
                     style:
                         const TextStyle(color: NiTheme.muted, fontSize: 12)),
+                const SizedBox(height: 8),
+                Text(
+                    'Copyright © 2020-${DateTime.now().year} Purslane Tech Pte. Ltd. y colaboradores.',
+                    style: const TextStyle(color: NiTheme.muted, fontSize: 12)),
                 const SizedBox(height: 14),
                 Wrap(
                   spacing: 8,
@@ -806,7 +809,7 @@ class _AboutSettings extends StatelessWidget {
                     _SecondaryButton(
                       label: 'Código fuente',
                       icon: Icons.code_rounded,
-                      onPressed: () => _open(_kSourceUrl),
+                      onPressed: () => _open(niSourceUrl),
                     ),
                     _SecondaryButton(
                       label: 'Texto de la licencia AGPL',

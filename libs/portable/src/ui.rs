@@ -3,7 +3,6 @@ use nwg::NativeUi;
 use std::cell::RefCell;
 
 const GIF_DATA: &[u8] = include_bytes!("./res/spin.gif");
-const LABEL_DATA: &[u8] = include_bytes!("./res/label.png");
 const GIF_SIZE: i32 = 32;
 const BG_COLOR: [u8; 3] = [90, 90, 120];
 const BORDER_COLOR: [u8; 3] = [40, 40, 40];
@@ -16,7 +15,7 @@ pub struct BasicApp {
     border_image: nwg::ImageFrame,
     bg_image: nwg::ImageFrame,
     gif_image: nwg::ImageFrame,
-    label_image: nwg::ImageFrame,
+    label_image: nwg::Label,
 
     border_layout: nwg::GridLayout,
     bg_layout: nwg::GridLayout,
@@ -68,7 +67,7 @@ impl BasicApp {
 
 mod basic_app_ui {
     use super::*;
-    use native_windows_gui::{self as nwg, Bitmap};
+    use native_windows_gui as nwg;
     use nwg::{Event, GridLayoutItem};
     use std::cell::RefCell;
     use std::ops::Deref;
@@ -115,10 +114,11 @@ mod basic_app_ui {
                 .background_color(Some(BG_COLOR))
                 .build(&mut data.gif_image)?;
 
-            nwg::ImageFrame::builder()
+            nwg::Label::builder()
                 .parent(&data.bg_image)
                 .background_color(Some(BG_COLOR))
-                .bitmap(Some(&Bitmap::from_bin(LABEL_DATA)?))
+                .text("NiSoporte")
+                .h_align(nwg::HTextAlign::Center)
                 .build(&mut data.label_image)?;
 
             nwg::AnimationTimer::builder()
