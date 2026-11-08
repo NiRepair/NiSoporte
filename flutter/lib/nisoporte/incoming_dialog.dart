@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:window_manager/window_manager.dart';
 import 'package:flutter_hbb/common.dart';
 import 'package:flutter_hbb/consts.dart';
 import 'package:flutter_hbb/desktop/pages/server_page.dart';
@@ -26,20 +29,39 @@ class NiIncomingPage extends StatefulWidget {
 }
 
 class _NiIncomingPageState extends State<NiIncomingPage> {
+  bool _helpActive = false;
+  Timer? _minimizeTimer;
+
   @override
   void initState() {
     super.initState();
-    gFFI.serverModel.addListener(_keepSessionControlsVisible);
+    gFFI.serverModel.addListener(_updateHelpWindow);
   }
 
-  void _keepSessionControlsVisible() {
-    gFFI.serverModel.cmHiddenTimer?.cancel();
-    gFFI.serverModel.cmHiddenTimer = null;
+  void _updateHelpWindow() {
+    final clients = gFFI.serverModel.clients.where((c) => !c.disconnected);
+    final pending = clients.any((c) => !c.authorized);
+    final active = clients.any((c) => c.authorized) && !pending;
+    if (pending) {
+      _minimizeTimer?.cancel();
+      _minimizeTimer = null;
+    }
+    if (active == _helpActive) return;
+    _minimizeTimer?.cancel();
+    _helpActive = active;
+    windowManager.setSize(active ? const Size(320, 150) : const Size(440, 490));
+    if (active) {
+      _minimizeTimer = Timer(const Duration(seconds: 3), () {
+        _minimizeTimer = null;
+        if (mounted && _helpActive) windowManager.minimize();
+      });
+    }
   }
 
   @override
   void dispose() {
-    gFFI.serverModel.removeListener(_keepSessionControlsVisible);
+    _minimizeTimer?.cancel();
+    gFFI.serverModel.removeListener(_updateHelpWindow);
     super.dispose();
   }
 
@@ -49,37 +71,76 @@ class _NiIncomingPageState extends State<NiIncomingPage> {
         ExcludeFocus(child: Offstage(offstage: true, child: widget.child)),
         Positioned.fill(
           child: Scaffold(
-            body: AnimatedBuilder(
-              animation: gFFI.serverModel,
-              builder: (context, _) {
-                final clients = gFFI.serverModel.clients
-                    .where((client) => !client.disconnected)
-                    .toList();
-                return Center(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(mainAxisSize: MainAxisSize.min, children: [
-                      const NiBrand(),
-                      const SizedBox(height: 20),
-                      if (clients.isEmpty)
-                        const Text('Esperando una solicitud de ayuda…',
-                            style: TextStyle(color: NiTheme.text2)),
-                      for (final client in clients) ...[
-                        if (client.authorized)
-                          NiSessionBanner(
-                            onEnd: () => checkClickTime(client.id,
-                                () => bind.cmCloseConnection(connId: client.id)),
-                          )
-                        else
-                          NiIncomingDialog(
-                              key: ValueKey(client.id), client: client),
-                        const SizedBox(height: 12),
-                      ],
-                    ]),
+            body: Column(children: [
+              SizedBox(
+                height: 32,
+                child: Row(children: [
+                  Expanded(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onPanStart: (_) => windowManager.startDragging(),
+                      child: const Padding(
+                        padding: EdgeInsets.only(left: 12),
+                        child: Text('NiSoporte'),
+                      ),
+                    ),
                   ),
-                );
-              },
-            ),
+                  IconButton(
+                    padding: EdgeInsets.zero,
+                    tooltip: 'Minimizar',
+                    icon: const Icon(Icons.minimize, size: 18),
+                    onPressed: () => windowManager.minimize(),
+                  ),
+                ]),
+              ),
+              Expanded(
+                child: AnimatedBuilder(
+                  animation: gFFI.serverModel,
+                  builder: (context, _) {
+                    final clients = gFFI.serverModel.clients
+                        .where((client) => !client.disconnected)
+                        .toList();
+                    return Center(
+                      child: SingleChildScrollView(
+                        padding: EdgeInsets.all(_helpActive ? 8 : 20),
+                        child: Column(mainAxisSize: MainAxisSize.min, children: [
+                          if (!_helpActive) ...[
+                            const NiBrand(),
+                            const SizedBox(height: 20),
+                          ],
+                          if (clients.isEmpty)
+                            const Text('Esperando una solicitud de ayuda…',
+                                style: TextStyle(color: NiTheme.text2)),
+                          for (final client in clients) ...[
+                            if (client.authorized)
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  const Text('NiRepair te está ayudando',
+                                      style: TextStyle(color: NiTheme.success,
+                                          fontWeight: FontWeight.w700)),
+                                  const SizedBox(height: 8),
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                        backgroundColor: NiTheme.error),
+                                    onPressed: () => checkClickTime(client.id,
+                                        () => bind.cmCloseConnection(connId: client.id)),
+                                    child: const Text('Terminar ayuda'),
+                                  ),
+                                ],
+                              )
+                            else
+                              NiIncomingDialog(
+                                  key: ValueKey(client.id), client: client),
+                            const SizedBox(height: 12),
+                          ],
+                        ]),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ]),
           ),
         ),
       ]);

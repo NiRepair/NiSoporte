@@ -2806,6 +2806,23 @@ fn set_process_rdp_window_title(process_id: DWORD, name: &str) -> io::Result<()>
     Ok(())
 }
 
+pub fn show_ni_client_help_window() -> bool {
+    if !config::is_incoming_only() {
+        return false;
+    }
+    unsafe {
+        let class = wide_string(FLUTTER_RUNNER_WIN32_WINDOW_CLASS);
+        let title = wide_string(&format!("{} - Connection Manager", crate::get_app_name()));
+        let window = FindWindowW(class.as_ptr(), title.as_ptr());
+        if window.is_null() || IsWindowVisible(window) == FALSE {
+            return false;
+        }
+        ShowWindow(window, SW_RESTORE);
+        SetForegroundWindow(window);
+    }
+    true
+}
+
 /// send message to currently shown window
 pub fn send_message_to_hnwd(
     class_name: &str,

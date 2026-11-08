@@ -326,7 +326,7 @@ showCmWindow({bool isStartup = false}) async {
   final alignment = bind.isIncomingOnly() ? Alignment.center : Alignment.topRight;
   if (isStartup) {
     WindowOptions windowOptions = getHiddenTitleBarWindowOptions(
-        size: size, alwaysOnTop: true);
+        size: size, alwaysOnTop: !bind.isIncomingOnly());
     await windowManager.waitUntilReadyToShow(windowOptions, null);
     bind.mainHideDock();
     await Future.wait([
@@ -340,6 +340,13 @@ showCmWindow({bool isStartup = false}) async {
     _isCmReadyToShow = true;
   } else if (_isCmReadyToShow) {
     if (await windowManager.getOpacity() != 1) {
+      if (bind.isIncomingOnly()) {
+        await windowManager.setOpacity(1);
+        await windowManager.restore();
+        await windowManager.show();
+        await windowManager.focus();
+        return;
+      }
       await windowManager.setOpacity(1);
       await windowManager.focus();
       await windowManager.minimize(); //needed

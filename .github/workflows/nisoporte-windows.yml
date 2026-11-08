@@ -212,6 +212,35 @@ jobs:
           head -n 100 "${VCPKG_ROOT}/buildtrees/ffmpeg/build-${{ matrix.job.vcpkg-triplet }}-rel-out.log" || true
         shell: bash
 
+      - name: Require administrator for CLIENTE
+        if: matrix.variant == 'CLIENTE'
+        shell: python
+        run: |
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+
+          ns = "urn:schemas-microsoft-com:asm.v3"
+          ET.register_namespace("", "urn:schemas-microsoft-com:asm.v1")
+          ET.register_namespace("asmv3", ns)
+          manifests = {Path("flutter/windows/runner/runner.exe.manifest"), Path("res/manifest.xml")}
+          portable = Path("libs/portable")
+          manifests.update(portable.rglob("*.manifest"))
+          manifests.update(portable.rglob("*manifest*.xml"))
+          for path in sorted(manifests):
+              tree = ET.parse(path)
+              root = tree.getroot()
+              levels = root.findall(f".//{{{ns}}}requestedExecutionLevel")
+              if not levels:
+                  trust = ET.SubElement(root, f"{{{ns}}}trustInfo")
+                  security = ET.SubElement(trust, f"{{{ns}}}security")
+                  privileges = ET.SubElement(security, f"{{{ns}}}requestedPrivileges")
+                  levels = [ET.SubElement(privileges, f"{{{ns}}}requestedExecutionLevel")]
+              for level in levels:
+                  level.set("level", "requireAdministrator")
+                  level.set("uiAccess", "false")
+              tree.write(path, encoding="utf-8", xml_declaration=True)
+              print(f"{path}: requireAdministrator")
+
       - name: Build rustdesk
         run: |
           # Windows: build RustDesk

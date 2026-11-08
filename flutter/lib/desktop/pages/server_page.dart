@@ -140,7 +140,10 @@ class ConnectionManagerState extends State<ConnectionManager>
               gFFI.chatModel.showChatPage(MessageKey(client.peerId, client.id));
             });
           }
-          windowManager.setTitle(getWindowNameWithId(client.peerId));
+          // CLIENTE keeps the native CM title so the tray can find its window.
+          if (!bind.isIncomingOnly()) {
+            windowManager.setTitle(getWindowNameWithId(client.peerId));
+          }
           gFFI.cmFileModel.updateCurrentClientId(client.id);
         }
       }
